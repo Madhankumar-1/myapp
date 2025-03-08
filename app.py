@@ -28,7 +28,7 @@ def default_route():
     response = {
         "instanceId": generate_instance_id(),
         "machineId": machine_id,
-        "type": "nodejs",  # Default type
+        "type": "python",  # Default type
         "deployment": "aws-ec2",  # Default deployment
         "pathParams": {},  # No path parameters
         "queryParams": {},  # No query parameters
@@ -42,37 +42,20 @@ def default_route():
 # Route with path parameter
 @app.route('/<path_param>', methods=['GET'])
 def path_param_route(path_param):
+    query_param = request.args
+    message=query_param.get('message', default='none')
     machine_id = get_instance_ip_address()
     response = {
         "instanceId": generate_instance_id(),
         "machineId": machine_id,
         "type": "nodejs",  # Default type
         "deployment": "aws-ec2",  # Default deployment
-        "pathParams": {"pathParam": path_param},  # Path parameter
-        "queryParams": {},  # No query parameters
+        "pathParams": path_param,  # Path parameter
+        "queryParams":  query_param,  # Query parameters
         "method": request.method,
         "path": request.path,
         "startTime": datetime.utcnow().isoformat() + "Z",
-        "message": f"Hello World, Pathparam: {path_param}, Queryparam: none",
-    }
-    return jsonify(response)
-
-# Route with path parameter and query parameter
-@app.route('/<path_param>/query', methods=['GET'])
-def path_and_query_route(path_param):
-    query_param = request.args.get('queryParam', default='none')
-    machine_id = get_instance_ip_address()
-    response = {
-        "instanceId": generate_instance_id(),
-        "machineId": machine_id,
-        "type": "nodejs",  # Default type
-        "deployment": "aws-ec2",  # Default deployment
-        "pathParams": {"pathParam": path_param},  # Path parameter
-        "queryParams": {"queryParam": query_param},  # Query parameters
-        "method": request.method,
-        "path": request.path,
-        "startTime": datetime.utcnow().isoformat() + "Z",
-        "message": f"Hello World, Pathparam: {path_param}, Queryparam: {query_param}",
+        "message": f"Hello World, Pathparam: {path_param}, Queryparam: {message}",
     }
     return jsonify(response)
 
