@@ -11,15 +11,53 @@ items = []
 def generate_instance_id():
     return f"inst-{int(datetime.now().timestamp() * 1000)}"
 
-# Fetch the EC2 instance's private IP address
-def get_instance_ip_address():
+
+# Metadata service URL
+METADATA_URL = "http://169.254.169.254/latest/meta-data"
+
+# Step 1: Fetch the token
+def fetch_token():
     try:
-        response = requests.get('http://169.254.169.254/latest/meta-data/local-ipv4', timeout=2)
+        response = requests.put(
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},  # Token valid for 6 hours
+            timeout=2
+        )
         response.raise_for_status()
         return response.text
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching instance IP address: {e}")
-        return "unknown"
+        print(f"Error fetching token: {e}")
+        return None
+
+# Step 2: Fetch metadata using the token
+def fetch_metadata(token, path):
+    try:
+        response = requests.get(
+            f"{METADATA_URL}/{path}",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=2
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching metadata: {e}")
+        return None
+
+# Main function
+def get_instance_ip_address():
+    token = fetch_token()
+    if not token:
+        print("Failed to fetch token. Exiting.")
+        return
+
+    # Fetch the private IP address
+    private_ip = fetch_metadata(token, "local-ipv4")
+    if private_ip:
+        print(f"Private IP Address: {private_ip}")
+    else:
+        print("Failed to fetch private IP address.")
+    return private_ip
+
 
 # Default route
 @app.route('/', methods=['GET'])
@@ -102,3 +140,54 @@ def delete_item(id):
 # Start the server
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
+
+
+
+    import requests
+
+# Metadata service URL
+METADATA_URL = "http://169.254.169.254/latest/meta-data"
+
+# Step 1: Fetch the token
+def fetch_token():
+    try:
+        response = requests.put(
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},  # Token valid for 6 hours
+            timeout=2
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching token: {e}")
+        return None
+
+# Step 2: Fetch metadata using the token
+def fetch_metadata(token, path):
+    try:
+        response = requests.get(
+            f"{METADATA_URL}/{path}",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=2
+        )
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching metadata: {e}")
+        return None
+
+# Main function
+def main():
+    token = fetch_token()
+    if not token:
+        print("Failed to fetch token. Exiting.")
+        return
+
+    # Fetch the private IP address
+    private_ip = fetch_metadata(token, "local-ipv4")
+    if private_ip:
+        print(f"Private IP Address: {private_ip}")
+    else:
+        print("Failed to fetch private IP address.")
+
+
